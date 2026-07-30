@@ -6,6 +6,10 @@ from app.modules.users.schemas import (
     UserRegisterRequest,
     UserResponse,
 )
+from app.modules.users.schemas import (
+    TokenResponse,
+    UserLoginRequest,
+)
 
 router = APIRouter(
     prefix="/auth",
@@ -30,4 +34,23 @@ async def register(
     return success_response(
         message="User registered successfully.",
         data=UserResponse.model_validate(user),
+    )
+
+
+@router.post(
+    "/login",
+    response_model=APIResponse[TokenResponse],
+)
+async def login(
+    request: UserLoginRequest,
+):
+    """
+    Authenticate a user.
+    """
+
+    token = await auth_service.login(request)
+
+    return success_response(
+        message="Login successful.",
+        data=token,
     )

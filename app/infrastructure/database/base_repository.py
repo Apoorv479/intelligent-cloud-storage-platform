@@ -104,3 +104,27 @@ class BaseRepository(Generic[T], ABC):
         filters = filters or {}
 
         return await self.collection.count_documents(filters)
+
+    async def update(
+        self,
+        document_id: str,
+        update_data: dict,
+    ) -> T | None:
+        """
+        Update a document.
+        """
+
+        if not ObjectId.is_valid(document_id):
+            return None
+
+        await self.collection.update_one(
+            {"_id": ObjectId(document_id)},
+            {"$set": update_data},
+        )
+
+        document = await self.collection.find_one({"_id": ObjectId(document_id)})
+
+        if document is None:
+            return None
+
+        return self.document_class.model_validate(document)
