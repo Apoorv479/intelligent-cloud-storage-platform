@@ -18,7 +18,15 @@ class Settings(BaseSettings):
     HOST: str = "127.0.0.1"
     PORT: int = 8000
 
-    model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
+    # MongoDB
+
+    MONGODB_URI: str
+    MONGODB_DATABASE: str
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=True,
+    )
 
 
 @lru_cache

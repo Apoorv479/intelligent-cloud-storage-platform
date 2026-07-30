@@ -17,7 +17,7 @@ Future responsibilities:
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-
+from app.infrastructure.database.connection import mongodb
 from app.core.config import settings
 from app.core.logger import logger
 
@@ -43,7 +43,7 @@ async def lifespan(app: FastAPI):
         # Future Initializations
         # --------------------------------------------------
         #
-        # await initialize_database()
+        await mongodb.connect()
         # await initialize_redis()
         # await initialize_minio()
         # await initialize_qdrant()
@@ -72,7 +72,7 @@ async def lifespan(app: FastAPI):
         # Future Cleanup
         # --------------------------------------------------
         #
-        # await close_database()
+        await mongodb.disconnect()
         # await close_redis()
         # await close_minio()
         # await close_qdrant()
