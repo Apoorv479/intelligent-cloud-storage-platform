@@ -13,6 +13,9 @@ class UserService:
         self,
         request: UserCreateRequest,
     ) -> UserDocument:
+        """
+        Create a new user.
+        """
 
         existing_user = await user_repository.get_one(
             {
@@ -44,6 +47,15 @@ class UserService:
             raise NotFoundException("User not found.")
 
         return user
+
+    async def get_users(
+        self,
+    ) -> list[UserDocument]:
+        """
+        Retrieve all users.
+        """
+
+        return await user_repository.get_many()
 
 
 user_service = UserService()

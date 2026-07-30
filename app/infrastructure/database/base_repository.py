@@ -26,11 +26,22 @@ class BaseRepository(Generic[T], ABC):
 
         return mongodb.database[self.collection_name]
 
-    async def create(self, document: T) -> T:
+    async def create(
+        self,
+        document: T,
+    ) -> T:
+        """
+        Insert a document into MongoDB.
+        """
+
         await self.collection.insert_one(document.model_dump(by_alias=True))
+
         return document
 
-    async def get_by_id(self, document_id: str) -> T | None:
+    async def get_by_id(
+        self,
+        document_id: str,
+    ) -> T | None:
         """
         Retrieve a document by its MongoDB id.
         """
@@ -38,7 +49,11 @@ class BaseRepository(Generic[T], ABC):
         if not is_valid_object_id(document_id):
             return None
 
-        document = await self.collection.find_one({"_id": ObjectId(document_id)})
+        document = await self.collection.find_one(
+            {
+                "_id": ObjectId(document_id),
+            }
+        )
 
         if document is None:
             return None
@@ -59,3 +74,21 @@ class BaseRepository(Generic[T], ABC):
             return None
 
         return self.document_class.model_validate(document)
+
+    async def get_many(
+        self,
+        filters: dict | None = None,
+        skip: int = 0,
+        limit: int = 100,
+    ) -> list[T]:
+        """
+        Retrieve multiple documents matching the given filters.
+        """
+
+        filters = filters or {}
+
+        cursor = self.collection.find(filters).skip(skip).limit(limit)
+
+        documents = await cursor.to_list(length=limit)
+
+        return [self.document_class.model_validate(document) for document in documents]

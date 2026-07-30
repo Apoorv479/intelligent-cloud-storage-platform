@@ -50,3 +50,20 @@ async def get_user(
         message="User retrieved successfully.",
         data=UserResponse.model_validate(user),
     )
+
+
+@router.get(
+    "",
+    response_model=APIResponse[list[UserResponse]],
+)
+async def get_users():
+    """
+    Retrieve all users.
+    """
+
+    users = await user_service.get_users()
+
+    return success_response(
+        message="Users retrieved successfully.",
+        data=[UserResponse.model_validate(user) for user in users],
+    )
