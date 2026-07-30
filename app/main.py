@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
 from app.core.config import settings
+from app.core.exceptions import NotFoundException, register_exception_handlers
 from app.core.logger import logger
 from app.core.responses import APIResponse
 
@@ -11,8 +12,11 @@ app = FastAPI(
     version=settings.APP_VERSION,
 )
 
+# Register global exception handlers
+register_exception_handlers(app)
 
-@app.get("/", response_model=APIResponse)
+
+@app.get("/")
 async def root():
     logger.info("Root endpoint accessed.")
 
@@ -26,11 +30,20 @@ async def root():
     )
 
 
-@app.get("/health", response_model=APIResponse)
+@app.get("/health")
 async def health():
     logger.info("Health endpoint accessed.")
 
     return APIResponse(
         message="Health check successful.",
-        data={"status": "healthy"},
+        data={
+            "status": "healthy",
+        },
     )
+
+
+@app.get("/error")
+async def error():
+    logger.info("Error endpoint accessed.")
+
+    raise NotFoundException("Folder does not exist.")
