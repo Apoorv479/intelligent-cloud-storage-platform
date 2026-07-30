@@ -1,6 +1,10 @@
 from fastapi import APIRouter, status
 
-from app.core.responses import APIResponse, success_response
+from app.core.responses import (
+    APIResponse,
+    PaginatedData,
+    success_response,
+)
 from app.modules.users.schemas import (
     UserCreateRequest,
     UserResponse,
@@ -54,16 +58,28 @@ async def get_user(
 
 @router.get(
     "",
-    response_model=APIResponse[list[UserResponse]],
+    response_model=APIResponse[PaginatedData[UserResponse]],
 )
-async def get_users():
+async def get_users(
+    skip: int = 0,
+    limit: int = 20,
+):
     """
-    Retrieve all users.
+    Retrieve users with pagination.
     """
 
-    users = await user_service.get_users()
+    result = await user_service.get_users(
+        skip=skip,
+        limit=limit,
+    )
 
     return success_response(
         message="Users retrieved successfully.",
-        data=[UserResponse.model_validate(user) for user in users],
+        data=PaginatedData(
+            items=[UserResponse.model_validate(user) for user in result["items"]],
+            total=result["total"],
+            skip=result["skip"],
+            limit=result["limit"],
+            has_next=result["has_next"],
+        ),
     )

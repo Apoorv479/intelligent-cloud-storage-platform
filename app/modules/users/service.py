@@ -50,12 +50,27 @@ class UserService:
 
     async def get_users(
         self,
-    ) -> list[UserDocument]:
+        skip: int = 0,
+        limit: int = 20,
+    ):
         """
-        Retrieve all users.
+        Retrieve paginated users.
         """
 
-        return await user_repository.get_many()
+        users = await user_repository.get_many(
+            skip=skip,
+            limit=limit,
+        )
+
+        total = await user_repository.count()
+
+        return {
+            "items": users,
+            "total": total,
+            "skip": skip,
+            "limit": limit,
+            "has_next": skip + limit < total,
+        }
 
 
 user_service = UserService()

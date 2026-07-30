@@ -92,3 +92,15 @@ class BaseRepository(Generic[T], ABC):
         documents = await cursor.to_list(length=limit)
 
         return [self.document_class.model_validate(document) for document in documents]
+
+    async def count(
+        self,
+        filters: dict | None = None,
+    ) -> int:
+        """
+        Count documents matching the given filters.
+        """
+
+        filters = filters or {}
+
+        return await self.collection.count_documents(filters)

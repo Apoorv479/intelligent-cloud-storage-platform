@@ -32,6 +32,18 @@ class ErrorResponse(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
 
+class PaginatedData(BaseModel, Generic[T]):
+    """
+    Standard paginated response payload.
+    """
+
+    items: list[T]
+    total: int
+    skip: int
+    limit: int
+    has_next: bool
+
+
 def success_response(
     message: str,
     data: Any = None,
