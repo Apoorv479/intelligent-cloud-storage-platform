@@ -1,18 +1,20 @@
 from fastapi import FastAPI
 
 from app.core.config import settings
-from app.core.exceptions import NotFoundException, register_exception_handlers
+from app.core.exceptions import (
+    NotFoundException,
+    register_exception_handlers,
+)
+from app.core.lifespan import lifespan
 from app.core.logger import logger
-from app.core.responses import APIResponse
-
-logger.info("Initializing application...")
+from app.core.responses import success_response
 
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
+    lifespan=lifespan,
 )
 
-# Register global exception handlers
 register_exception_handlers(app)
 
 
@@ -20,7 +22,7 @@ register_exception_handlers(app)
 async def root():
     logger.info("Root endpoint accessed.")
 
-    return APIResponse(
+    return success_response(
         message="Application started successfully.",
         data={
             "application": settings.APP_NAME,
@@ -34,7 +36,7 @@ async def root():
 async def health():
     logger.info("Health endpoint accessed.")
 
-    return APIResponse(
+    return success_response(
         message="Health check successful.",
         data={
             "status": "healthy",

@@ -2,13 +2,13 @@
 Custom application exceptions and global exception handlers.
 """
 
-from datetime import datetime
 from typing import Any, Optional
 
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
 from app.core.logger import logger
+from app.core.responses import error_response
 
 # Base Exception
 
@@ -23,7 +23,7 @@ class AppException(Exception):
         message: str,
         status_code: int,
         error: Optional[Any] = None,
-    ):
+    ) -> None:
         self.message = message
         self.status_code = status_code
         self.error = error
@@ -31,108 +31,132 @@ class AppException(Exception):
         super().__init__(message)
 
 
-# Authentication
+# Authentication Exceptions
 
 
 class AuthenticationException(AppException):
+    """
+    Raised when user authentication fails.
+    """
 
-    def __init__(self, message="Authentication failed"):
+    def __init__(self, message: str = "Authentication failed") -> None:
         super().__init__(
-            message,
-            status.HTTP_401_UNAUTHORIZED,
+            message=message,
+            status_code=status.HTTP_401_UNAUTHORIZED,
         )
 
 
 class AuthorizationException(AppException):
+    """
+    Raised when a user is not authorized to access a resource.
+    """
 
-    def __init__(self, message="Access denied"):
+    def __init__(self, message: str = "Access denied") -> None:
         super().__init__(
-            message,
-            status.HTTP_403_FORBIDDEN,
+            message=message,
+            status_code=status.HTTP_403_FORBIDDEN,
         )
 
 
-# Validation
+# Validation Exceptions
 
 
 class ValidationException(AppException):
+    """
+    Raised when request validation fails.
+    """
 
     def __init__(
         self,
-        message="Validation failed",
-        error=None,
-    ):
+        message: str = "Validation failed",
+        error: Any = None,
+    ) -> None:
         super().__init__(
-            message,
-            status.HTTP_422_UNPROCESSABLE_ENTITY,
-            error,
+            message=message,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            error=error,
         )
 
 
-# Resources
+# Resource Exceptions
 
 
 class NotFoundException(AppException):
+    """
+    Raised when a requested resource does not exist.
+    """
 
-    def __init__(self, message="Resource not found"):
+    def __init__(self, message: str = "Resource not found") -> None:
         super().__init__(
-            message,
-            status.HTTP_404_NOT_FOUND,
+            message=message,
+            status_code=status.HTTP_404_NOT_FOUND,
         )
 
 
 class ConflictException(AppException):
+    """
+    Raised when a resource already exists.
+    """
 
-    def __init__(self, message="Resource already exists"):
+    def __init__(self, message: str = "Resource already exists") -> None:
         super().__init__(
-            message,
-            status.HTTP_409_CONFLICT,
+            message=message,
+            status_code=status.HTTP_409_CONFLICT,
         )
 
 
-# Storage
+# Storage Exceptions
 
 
 class StorageException(AppException):
+    """
+    Raised for storage-related failures.
+    """
 
-    def __init__(self, message="Storage operation failed"):
+    def __init__(self, message: str = "Storage operation failed") -> None:
         super().__init__(
-            message,
-            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            message=message,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
 
-# AI
+# AI Exceptions
 
 
 class AIProcessingException(AppException):
+    """
+    Raised when AI processing fails.
+    """
 
-    def __init__(self, message="AI processing failed"):
+    def __init__(self, message: str = "AI processing failed") -> None:
         super().__init__(
-            message,
-            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            message=message,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
 
-# Search
+# Search Exceptions
 
 
 class SearchException(AppException):
+    """
+    Raised when search fails.
+    """
 
-    def __init__(self, message="Search failed"):
+    def __init__(self, message: str = "Search failed") -> None:
         super().__init__(
-            message,
-            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            message=message,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
 
-# Global Exception Handler
+# Global Exception Handlers
 
 
 async def app_exception_handler(
     request: Request,
     exc: AppException,
-):
+) -> JSONResponse:
     """
     Handles all custom application exceptions.
     """
@@ -141,40 +165,39 @@ async def app_exception_handler(
 
     return JSONResponse(
         status_code=exc.status_code,
-        content={
-            "success": False,
-            "message": exc.message,
-            "error": exc.error,
-            "timestamp": datetime.utcnow().isoformat(),
-        },
+        content=error_response(
+            message=exc.message,
+            error=exc.error,
+        ).model_dump(mode="json"),
     )
 
 
 async def unhandled_exception_handler(
     request: Request,
     exc: Exception,
-):
+) -> JSONResponse:
     """
     Handles unexpected exceptions.
     """
 
-    logger.exception(exc)
+    logger.exception(f"{request.method} {request.url.path} -> {str(exc)}")
 
     return JSONResponse(
-        status_code=500,
-        content={
-            "success": False,
-            "message": "Internal server error",
-            "error": str(exc),
-            "timestamp": datetime.utcnow().isoformat(),
-        },
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content=error_response(
+            message="Internal server error",
+            error=str(exc),
+        ).model_dump(mode="json"),
     )
 
 
-# Register handlers
+# Register Exception Handlers
 
 
-def register_exception_handlers(app: FastAPI):
+def register_exception_handlers(app: FastAPI) -> None:
+    """
+    Register all global exception handlers.
+    """
 
     app.add_exception_handler(
         AppException,

@@ -1,7 +1,5 @@
 """
-Standard API response models.
-
-Every API endpoint should return one of these response models.
+Standard API response models and helper functions.
 """
 
 from datetime import datetime
@@ -18,11 +16,8 @@ class APIResponse(BaseModel, Generic[T]):
     """
 
     success: bool = True
-
-    message: str = "Request completed successfully."
-
+    message: str
     data: Optional[T] = None
-
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
 
@@ -32,9 +27,34 @@ class ErrorResponse(BaseModel):
     """
 
     success: bool = False
-
     message: str
-
     error: Optional[Any] = None
-
     timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+
+def success_response(
+    message: str,
+    data: Any = None,
+) -> APIResponse:
+    """
+    Generate a standardized success response.
+    """
+
+    return APIResponse(
+        message=message,
+        data=data,
+    )
+
+
+def error_response(
+    message: str,
+    error: Any = None,
+) -> ErrorResponse:
+    """
+    Generate a standardized error response.
+    """
+
+    return ErrorResponse(
+        message=message,
+        error=error,
+    )
