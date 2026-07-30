@@ -8,14 +8,18 @@ from app.core.exceptions import (
 from app.core.lifespan import lifespan
 from app.core.logger import logger
 from app.core.responses import success_response
-from app.repositories.test_repository import TestRepository
+from app.modules.users.router import router as user_router
+
+# from app.repositories.test_repository import TestRepository
 
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
     lifespan=lifespan,
 )
-test_repository = TestRepository()
+
+app.include_router(user_router)
+# test_repository = TestRepository()
 
 register_exception_handlers(app)
 
@@ -53,13 +57,13 @@ async def error():
     raise NotFoundException("Folder does not exist.")
 
 
-@app.get("/db")
-async def database_check():
-    await test_repository.ping()
+# @app.get("/db")
+# async def database_check():
+#     await test_repository.ping()
 
-    return success_response(
-        message="MongoDB connection is working.",
-        data={
-            "database": settings.MONGODB_DATABASE,
-        },
-    )
+#     return success_response(
+#         message="MongoDB connection is working.",
+#         data={
+#             "database": settings.MONGODB_DATABASE,
+#         },
+#     )
