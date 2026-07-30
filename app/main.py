@@ -9,8 +9,7 @@ from app.core.lifespan import lifespan
 from app.core.logger import logger
 from app.core.responses import success_response
 from app.modules.users.router import router as user_router
-
-# from app.repositories.test_repository import TestRepository
+from app.modules.auth.router import router as auth_router
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -19,7 +18,7 @@ app = FastAPI(
 )
 
 app.include_router(user_router)
-# test_repository = TestRepository()
+app.include_router(auth_router)
 
 register_exception_handlers(app)
 
