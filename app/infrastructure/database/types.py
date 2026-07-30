@@ -1,7 +1,3 @@
-"""
-Common MongoDB types.
-"""
-
 from typing import Annotated
 
 from bson import ObjectId
@@ -9,10 +5,6 @@ from pydantic import BeforeValidator
 
 
 def validate_object_id(value: str | ObjectId) -> str:
-    """
-    Convert ObjectId to string and validate it.
-    """
-
     if isinstance(value, ObjectId):
         return str(value)
 
@@ -20,6 +12,10 @@ def validate_object_id(value: str | ObjectId) -> str:
         return value
 
     raise ValueError("Invalid ObjectId")
+
+
+def is_valid_object_id(value: str) -> bool:
+    return ObjectId.is_valid(value)
 
 
 PyObjectId = Annotated[
