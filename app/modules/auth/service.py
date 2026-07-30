@@ -75,12 +75,12 @@ class AuthService:
         if not user.is_active:
             raise AuthenticationException("Account is inactive.")
 
-        # user = await user_repository.update(
-        #     user.id,
-        #     {
-        #         "last_login": datetime.now(UTC),
-        #     },
-        # )
+        await user_repository.update(
+            user.id,
+            {
+                "last_login": datetime.now(UTC),
+            },
+        )
 
         access_token = create_access_token(
             subject=user.id,
