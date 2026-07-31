@@ -11,6 +11,13 @@ from app.modules.users.schemas import (
     UserLoginRequest,
 )
 
+from fastapi.security import OAuth2PasswordRequestForm
+
+from fastapi import Depends
+
+from app.core.dependencies import get_current_user
+from app.modules.users.models import UserDocument
+
 router = APIRouter(
     prefix="/auth",
     tags=["Authentication"],
@@ -53,4 +60,44 @@ async def login(
     return success_response(
         message="Login successful.",
         data=token,
+    )
+
+
+@router.post(
+    "/token",
+    response_model=TokenResponse,
+)
+async def login_for_access_token(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+):
+    """
+    OAuth2 endpoint used by Swagger Authorize.
+    """
+
+    request = UserLoginRequest(
+        email=form_data.username,
+        password=form_data.password,
+    )
+
+    return await auth_service.login(request)
+
+
+@router.get(
+    "/me",
+    response_model=APIResponse[UserResponse],
+)
+async def get_me(
+    current_user: UserDocument = Depends(
+        get_current_user,
+    ),
+):
+    """
+    Return the authenticated user.
+    """
+
+    return success_response(
+        message="Current user fetched successfully.",
+        data=UserResponse.model_validate(
+            current_user,
+        ),
     )

@@ -2,17 +2,18 @@ from datetime import UTC, datetime, timedelta
 
 import bcrypt
 from jose import jwt
+from app.core.config import settings
 
 # JWT Configuration
 
 
-SECRET_KEY = "CHANGE_THIS_TO_A_LONG_RANDOM_SECRET"
+SECRET_KEY = "..."
 
-ALGORITHM = "HS256"
+ALGORITHM = "..."
 
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = ...
 
-REFRESH_TOKEN_EXPIRE_DAYS = 7
+REFRESH_TOKEN_EXPIRE_DAYS = ...
 
 
 # Password Hashing
@@ -57,10 +58,7 @@ def create_access_token(
     Create a JWT access token.
     """
 
-    expire = datetime.now(UTC) + timedelta(
-        minutes=ACCESS_TOKEN_EXPIRE_MINUTES,
-    )
-
+    expire = datetime.now(UTC) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     payload = {
         "sub": subject,
         "exp": expire,
@@ -69,8 +67,8 @@ def create_access_token(
 
     return jwt.encode(
         payload,
-        SECRET_KEY,
-        algorithm=ALGORITHM,
+        settings.SECRET_KEY,
+        algorithm=settings.ALGORITHM,
     )
 
 
@@ -82,9 +80,7 @@ def create_refresh_token(
     Create a JWT refresh token.
     """
 
-    expire = datetime.now(UTC) + timedelta(
-        days=REFRESH_TOKEN_EXPIRE_DAYS,
-    )
+    expire = datetime.now(UTC) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
 
     payload = {
         "sub": subject,
@@ -95,6 +91,6 @@ def create_refresh_token(
 
     return jwt.encode(
         payload,
-        SECRET_KEY,
-        algorithm=ALGORITHM,
+        settings.SECRET_KEY,
+        algorithm=settings.ALGORITHM,
     )

@@ -18,6 +18,14 @@ class Settings(BaseSettings):
     HOST: str = "127.0.0.1"
     PORT: int = 8000
 
+    SECRET_KEY: str = "your-super-secret-key-change-this-in-production"
+
+    ALGORITHM: str = "HS256"
+
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+
     # MongoDB
 
     MONGODB_URI: str

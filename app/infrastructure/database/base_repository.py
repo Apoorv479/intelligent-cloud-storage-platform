@@ -1,7 +1,6 @@
 from abc import ABC
 from typing import Generic, TypeVar
 
-from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorCollection
 
 from app.infrastructure.database.base_model import BaseDocument
@@ -51,7 +50,7 @@ class BaseRepository(Generic[T], ABC):
 
         document = await self.collection.find_one(
             {
-                "_id": ObjectId(document_id),
+                "_id": document_id,
             }
         )
 
@@ -114,15 +113,23 @@ class BaseRepository(Generic[T], ABC):
         Update a document.
         """
 
-        if not ObjectId.is_valid(document_id):
+        if not is_valid_object_id(document_id):
             return None
 
         await self.collection.update_one(
-            {"_id": ObjectId(document_id)},
-            {"$set": update_data},
+            {
+                "_id": document_id,
+            },
+            {
+                "$set": update_data,
+            },
         )
 
-        document = await self.collection.find_one({"_id": ObjectId(document_id)})
+        document = await self.collection.find_one(
+            {
+                "_id": document_id,
+            }
+        )
 
         if document is None:
             return None
