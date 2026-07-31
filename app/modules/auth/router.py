@@ -17,6 +17,7 @@ from fastapi import Depends
 
 from app.core.dependencies import get_current_user
 from app.modules.users.models import UserDocument
+from app.modules.users.schemas import RefreshTokenRequest
 
 router = APIRouter(
     prefix="/auth",
@@ -100,4 +101,25 @@ async def get_me(
         data=UserResponse.model_validate(
             current_user,
         ),
+    )
+
+
+@router.post(
+    "/refresh",
+    response_model=APIResponse[TokenResponse],
+)
+async def refresh_token(
+    request: RefreshTokenRequest,
+):
+    """
+    Generate a new access token using a refresh token.
+    """
+
+    token = await auth_service.refresh(
+        request.refresh_token,
+    )
+
+    return success_response(
+        message="Token refreshed successfully.",
+        data=token,
     )

@@ -54,6 +54,14 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 
 
+class RefreshTokenRequest(BaseModel):
+    """
+    Request schema for refreshing an access token.
+    """
+
+    refresh_token: str
+
+
 class UserResponse(BaseModel):
     """
     Response schema for a user.

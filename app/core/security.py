@@ -1,7 +1,7 @@
 from datetime import UTC, datetime, timedelta
 
 import bcrypt
-from jose import jwt
+from jose import JWTError, jwt
 from app.core.config import settings
 
 # JWT Configuration
@@ -94,3 +94,22 @@ def create_refresh_token(
         settings.SECRET_KEY,
         algorithm=settings.ALGORITHM,
     )
+
+
+def verify_refresh_token(
+    token: str,
+) -> dict:
+    """
+    Verify and decode a refresh token.
+    """
+
+    payload = jwt.decode(
+        token,
+        settings.SECRET_KEY,
+        algorithms=[settings.ALGORITHM],
+    )
+
+    if payload.get("type") != "refresh":
+        raise JWTError("Invalid refresh token.")
+
+    return payload
