@@ -37,3 +37,45 @@ async def create_folder(
         message="Folder created successfully.",
         data=FolderResponse.model_validate(folder),
     )
+
+
+@router.get(
+    "",
+    response_model=APIResponse[list[FolderResponse]],
+)
+async def get_folders(
+    current_user: UserDocument = Depends(get_current_user),
+):
+    """
+    Retrieve all folders for the authenticated user.
+    """
+
+    folders = await folder_service.get_folders(current_user)
+
+    return success_response(
+        message="Folders retrieved successfully.",
+        data=[FolderResponse.model_validate(folder) for folder in folders],
+    )
+
+
+@router.get(
+    "/{folder_id}",
+    response_model=APIResponse[FolderResponse],
+)
+async def get_folder(
+    folder_id: str,
+    current_user: UserDocument = Depends(get_current_user),
+):
+    """
+    Retrieve a folder by id.
+    """
+
+    folder = await folder_service.get_folder_by_id(
+        folder_id,
+        current_user,
+    )
+
+    return success_response(
+        message="Folder retrieved successfully.",
+        data=FolderResponse.model_validate(folder),
+    )

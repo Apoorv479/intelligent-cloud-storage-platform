@@ -61,5 +61,42 @@ class FolderService:
 
         return await folder_repository.create(folder)
 
+    async def get_folders(
+        self,
+        current_user: UserDocument,
+    ) -> list[FolderDocument]:
+        """
+        Retrieve all folders of the current user.
+        """
+
+        return await folder_repository.get_many(
+            filters={
+                "user_id": current_user.id,
+                "is_deleted": False,
+            }
+        )
+
+    async def get_folder_by_id(
+        self,
+        folder_id: str,
+        current_user: UserDocument,
+    ) -> FolderDocument:
+        """
+        Retrieve a folder by id.
+        """
+
+        folder = await folder_repository.get_by_id(folder_id)
+
+        if folder is None:
+            raise NotFoundException("Folder not found.")
+
+        if folder.user_id != current_user.id:
+            raise NotFoundException("Folder not found.")
+
+        if folder.is_deleted:
+            raise NotFoundException("Folder not found.")
+
+        return folder
+
 
 folder_service = FolderService()
