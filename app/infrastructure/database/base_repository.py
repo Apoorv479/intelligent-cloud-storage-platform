@@ -1,4 +1,5 @@
 from abc import ABC
+from datetime import UTC, datetime
 from typing import Generic, TypeVar
 
 from motor.motor_asyncio import AsyncIOMotorCollection
@@ -116,6 +117,8 @@ class BaseRepository(Generic[T], ABC):
         if not is_valid_object_id(document_id):
             return None
 
+        update_data["updated_at"] = datetime.now(UTC)
+
         await self.collection.update_one(
             {
                 "_id": document_id,
@@ -128,7 +131,7 @@ class BaseRepository(Generic[T], ABC):
         document = await self.collection.find_one(
             {
                 "_id": document_id,
-            }
+            },
         )
 
         if document is None:

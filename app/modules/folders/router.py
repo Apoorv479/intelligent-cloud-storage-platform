@@ -4,6 +4,7 @@ from app.core.dependencies import get_current_user
 from app.core.responses import APIResponse, success_response
 from app.modules.folders.schemas import (
     FolderCreateRequest,
+    FolderUpdateRequest,
     FolderResponse,
 )
 from app.modules.folders.service import folder_service
@@ -77,5 +78,30 @@ async def get_folder(
 
     return success_response(
         message="Folder retrieved successfully.",
+        data=FolderResponse.model_validate(folder),
+    )
+
+
+@router.patch(
+    "/{folder_id}",
+    response_model=APIResponse[FolderResponse],
+)
+async def rename_folder(
+    folder_id: str,
+    request: FolderUpdateRequest,
+    current_user: UserDocument = Depends(get_current_user),
+):
+    """
+    Rename a folder.
+    """
+
+    folder = await folder_service.rename_folder(
+        folder_id,
+        request,
+        current_user,
+    )
+
+    return success_response(
+        message="Folder renamed successfully.",
         data=FolderResponse.model_validate(folder),
     )

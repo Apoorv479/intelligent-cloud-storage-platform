@@ -4,7 +4,10 @@ from app.core.exceptions import (
 )
 from app.modules.folders.models import FolderDocument
 from app.modules.folders.repository import folder_repository
-from app.modules.folders.schemas import FolderCreateRequest
+from app.modules.folders.schemas import (
+    FolderCreateRequest,
+    FolderUpdateRequest,
+)
 from app.modules.users.models import UserDocument
 
 
@@ -97,6 +100,61 @@ class FolderService:
             raise NotFoundException("Folder not found.")
 
         return folder
+
+    async def rename_folder(
+        self,
+        folder_id: str,
+        request: FolderUpdateRequest,
+        current_user: UserDocument,
+    ) -> FolderDocument:
+        """
+        Rename a folder.
+        """
+
+        folder = await folder_repository.get_by_id(folder_id)
+
+        if folder is None:
+            raise NotFoundException("Folder not found.")
+
+        if folder.user_id != current_user.id:
+            raise NotFoundException("Folder not found.")
+
+        if folder.is_deleted:
+            raise NotFoundException("Folder not found.")
+
+        existing_folder = await folder_repository.get_one(
+            {
+                "user_id": current_user.id,
+                "parent_folder_id": folder.parent_folder_id,
+                "name": request.name,
+                "is_deleted": False,
+            }
+        )
+
+        if existing_folder is not None and existing_folder.id != folder.id:
+            raise ConflictException("Folder already exists.")
+
+        if folder.parent_folder_id is None:
+            new_path = f"/{request.name}"
+        else:
+            parent = await folder_repository.get_by_id(
+                folder.parent_folder_id,
+            )
+
+            if parent is None:
+                raise NotFoundException("Parent folder not found.")
+
+            new_path = f"{parent.path}/{request.name}"
+
+        updated_folder = await folder_repository.update(
+            folder.id,
+            {
+                "name": request.name,
+                "path": new_path,
+            },
+        )
+
+        return updated_folder
 
 
 folder_service = FolderService()
