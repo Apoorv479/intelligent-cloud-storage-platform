@@ -184,5 +184,31 @@ class FileService:
 
         return file_document, data
 
+    async def delete_file(
+        self,
+        file_id: str,
+        current_user: UserDocument,
+    ) -> FileDocument:
+        """
+        Soft delete a file.
+        """
+
+        file_document = await self.get_file_by_id(
+            file_id=file_id,
+            current_user=current_user,
+        )
+
+        deleted_file = await file_repository.update(
+            file_document.id,
+            {
+                "is_deleted": True,
+            },
+        )
+
+        if deleted_file is None:
+            raise NotFoundException("File not found.")
+
+        return deleted_file
+
 
 file_service = FileService()

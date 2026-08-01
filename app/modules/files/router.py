@@ -134,3 +134,30 @@ async def download_file(
             )
         },
     )
+
+
+@router.delete(
+    "/{file_id}",
+    response_model=APIResponse[FileResponse],
+)
+async def delete_file(
+    file_id: str,
+    current_user: UserDocument = Depends(
+        get_current_user,
+    ),
+):
+    """
+    Soft delete a file.
+    """
+
+    deleted_file = await file_service.delete_file(
+        file_id=file_id,
+        current_user=current_user,
+    )
+
+    return success_response(
+        message="File deleted successfully.",
+        data=FileResponse.model_validate(
+            deleted_file,
+        ),
+    )
