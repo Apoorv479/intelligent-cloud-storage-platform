@@ -108,7 +108,7 @@ class FolderService:
         current_user: UserDocument,
     ) -> FolderDocument:
         """
-        Rename a folder.
+        Rename a folder and update paths of all descendants.
         """
 
         folder = await folder_repository.get_by_id(folder_id)
@@ -122,6 +122,8 @@ class FolderService:
         if folder.is_deleted:
             raise NotFoundException("Folder not found.")
 
+        # Check for another folder with the same name
+        # under the same parent.
         existing_folder = await folder_repository.get_one(
             {
                 "user_id": current_user.id,
@@ -134,8 +136,12 @@ class FolderService:
         if existing_folder is not None and existing_folder.id != folder.id:
             raise ConflictException("Folder already exists.")
 
+        old_path = folder.path
+
+        # Build the new folder path.
         if folder.parent_folder_id is None:
             new_path = f"/{request.name}"
+
         else:
             parent = await folder_repository.get_by_id(
                 folder.parent_folder_id,
@@ -146,6 +152,7 @@ class FolderService:
 
             new_path = f"{parent.path}/{request.name}"
 
+        # Update the folder itself.
         updated_folder = await folder_repository.update(
             folder.id,
             {
@@ -153,6 +160,31 @@ class FolderService:
                 "path": new_path,
             },
         )
+
+        # Find all descendants.
+        descendants = await folder_repository.get_many(
+            filters={
+                "user_id": current_user.id,
+                "path": {"$regex": f"^{old_path}/"},
+            },
+            limit=1000,
+        )
+
+        # Update every descendant path.
+        for descendant in descendants:
+
+            descendant_new_path = descendant.path.replace(
+                old_path,
+                new_path,
+                1,
+            )
+
+            await folder_repository.update(
+                descendant.id,
+                {
+                    "path": descendant_new_path,
+                },
+            )
 
         return updated_folder
 
@@ -162,7 +194,7 @@ class FolderService:
         current_user: UserDocument,
     ) -> FolderDocument:
         """
-        Soft delete a folder.
+        Soft delete a folder and all of its descendants.
         """
 
         folder = await folder_repository.get_by_id(folder_id)
@@ -176,12 +208,33 @@ class FolderService:
         if folder.is_deleted:
             raise NotFoundException("Folder not found.")
 
+        # Soft delete the requested folder.
         deleted_folder = await folder_repository.update(
             folder.id,
             {
                 "is_deleted": True,
             },
         )
+
+        # Find all descendant folders.
+        descendants = await folder_repository.get_many(
+            filters={
+                "user_id": current_user.id,
+                "path": {"$regex": f"^{folder.path}/"},
+                "is_deleted": False,
+            },
+            limit=1000,
+        )
+
+        # Soft delete every descendant.
+        for descendant in descendants:
+
+            await folder_repository.update(
+                descendant.id,
+                {
+                    "is_deleted": True,
+                },
+            )
 
         return deleted_folder
 
