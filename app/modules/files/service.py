@@ -63,6 +63,7 @@ class FileService:
         storage_name = f"{uuid4().hex}{extension}"
 
         # Keep every user's objects isolated.
+
         storage_path = f"{current_user.id}/{storage_name}"
 
         content_type = file.content_type or "application/octet-stream"
@@ -95,11 +96,73 @@ class FileService:
         except Exception:
             # MinIO succeeded but MongoDB failed.
             # Remove the orphaned MinIO object.
+
             minio_storage.delete_file(
                 storage_path,
             )
 
             raise
+
+    async def get_files(
+        self,
+        current_user: UserDocument,
+        folder_id: str | None = None,
+    ) -> list[FileDocument]:
+        """
+        Retrieve files belonging to the current user.
+
+        If folder_id is provided, retrieve files
+        belonging to that folder.
+        """
+
+        filters = {
+            "user_id": current_user.id,
+            "is_deleted": False,
+        }
+
+        if folder_id is not None:
+            folder = await folder_repository.get_by_id(
+                folder_id,
+            )
+
+            if folder is None:
+                raise NotFoundException("Folder not found.")
+
+            if folder.user_id != current_user.id:
+                raise NotFoundException("Folder not found.")
+
+            if folder.is_deleted:
+                raise NotFoundException("Folder not found.")
+
+            filters["folder_id"] = folder_id
+
+        return await file_repository.get_many(
+            filters=filters,
+        )
+
+    async def get_file_by_id(
+        self,
+        file_id: str,
+        current_user: UserDocument,
+    ) -> FileDocument:
+        """
+        Retrieve a file by id.
+        """
+
+        file_document = await file_repository.get_by_id(
+            file_id,
+        )
+
+        if file_document is None:
+            raise NotFoundException("File not found.")
+
+        if file_document.user_id != current_user.id:
+            raise NotFoundException("File not found.")
+
+        if file_document.is_deleted:
+            raise NotFoundException("File not found.")
+
+        return file_document
 
 
 file_service = FileService()
