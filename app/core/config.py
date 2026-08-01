@@ -31,6 +31,16 @@ class Settings(BaseSettings):
     MONGODB_URI: str
     MONGODB_DATABASE: str
 
+    MINIO_ENDPOINT: str = "localhost:9000"
+
+    MINIO_ACCESS_KEY: str = "minioadmin"
+
+    MINIO_SECRET_KEY: str = "minioadmin123"
+
+    MINIO_BUCKET_NAME: str = "cloud-storage"
+
+    MINIO_SECURE: bool = False
+
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=True,

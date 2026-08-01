@@ -17,9 +17,11 @@ Future responsibilities:
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from app.infrastructure.database.connection import mongodb
+
 from app.core.config import settings
 from app.core.logger import logger
+from app.infrastructure.database.connection import mongodb
+from app.infrastructure.storage.minio_client import minio_storage
 
 
 @asynccontextmanager
@@ -28,9 +30,9 @@ async def lifespan(app: FastAPI):
     Manage application startup and shutdown events.
     """
 
-    # ======================================================
+    # ==================================================
     # Startup
-    # ======================================================
+    # ==================================================
 
     logger.info("=" * 60)
     logger.info(f"Starting {settings.APP_NAME}")
@@ -40,17 +42,29 @@ async def lifespan(app: FastAPI):
 
     try:
         # --------------------------------------------------
+        # Initialize MongoDB
+        # --------------------------------------------------
+
+        await mongodb.connect()
+
+        # --------------------------------------------------
+        # Initialize MinIO
+        # --------------------------------------------------
+
+        logger.info("Initializing MinIO storage...")
+
+        minio_storage.ensure_bucket()
+
+        logger.info("MinIO storage initialized.")
+
+        # --------------------------------------------------
         # Future Initializations
         # --------------------------------------------------
-        #
-        await mongodb.connect()
+
         # await initialize_redis()
-        # await initialize_minio()
         # await initialize_qdrant()
         # await load_ai_models()
         # await start_background_workers()
-        #
-        # --------------------------------------------------
 
         logger.info("Application startup completed successfully.")
 
@@ -69,15 +83,17 @@ async def lifespan(app: FastAPI):
         logger.info("Shutting down application...")
 
         # --------------------------------------------------
+        # MongoDB Cleanup
+        # --------------------------------------------------
+
+        await mongodb.disconnect()
+
+        # --------------------------------------------------
         # Future Cleanup
         # --------------------------------------------------
-        #
-        await mongodb.disconnect()
+
         # await close_redis()
-        # await close_minio()
         # await close_qdrant()
         # await stop_background_workers()
-        #
-        # --------------------------------------------------
 
         logger.info("Application shutdown completed successfully.")
