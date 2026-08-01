@@ -15,6 +15,9 @@ from app.core.responses import (
 from app.modules.files.schemas import FileResponse
 from app.modules.files.service import file_service
 from app.modules.users.models import UserDocument
+from io import BytesIO
+
+from fastapi.responses import StreamingResponse
 
 router = APIRouter(
     prefix="/files",
@@ -101,4 +104,33 @@ async def get_file(
         data=FileResponse.model_validate(
             file_document,
         ),
+    )
+
+
+@router.get(
+    "/{file_id}/download",
+)
+async def download_file(
+    file_id: str,
+    current_user: UserDocument = Depends(
+        get_current_user,
+    ),
+):
+    """
+    Download a stored file.
+    """
+
+    file_document, data = await file_service.download_file(
+        file_id=file_id,
+        current_user=current_user,
+    )
+
+    return StreamingResponse(
+        BytesIO(data),
+        media_type=file_document.content_type,
+        headers={
+            "Content-Disposition": (
+                f'attachment; filename="{file_document.original_name}"'
+            )
+        },
     )

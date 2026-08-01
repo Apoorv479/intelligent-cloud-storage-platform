@@ -65,5 +65,25 @@ class MinioStorage:
             object_name=object_name,
         )
 
+    def download_file(
+        self,
+        object_name: str,
+    ) -> bytes:
+        """
+        Download a file from MinIO.
+        """
+
+        response = self.client.get_object(
+            bucket_name=self.bucket_name,
+            object_name=object_name,
+        )
+
+        try:
+            return response.read()
+
+        finally:
+            response.close()
+            response.release_conn()
+
 
 minio_storage = MinioStorage()

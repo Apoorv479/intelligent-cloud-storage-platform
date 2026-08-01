@@ -164,5 +164,25 @@ class FileService:
 
         return file_document
 
+    async def download_file(
+        self,
+        file_id: str,
+        current_user: UserDocument,
+    ) -> tuple[FileDocument, bytes]:
+        """
+        Retrieve file metadata and download its content.
+        """
+
+        file_document = await self.get_file_by_id(
+            file_id=file_id,
+            current_user=current_user,
+        )
+
+        data = minio_storage.download_file(
+            file_document.storage_path,
+        )
+
+        return file_document, data
+
 
 file_service = FileService()
