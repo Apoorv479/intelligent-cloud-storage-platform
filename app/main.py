@@ -11,6 +11,7 @@ from app.core.responses import success_response
 from app.modules.users.router import router as user_router
 from app.modules.auth.router import router as auth_router
 from app.modules.folders.router import router as folder_router
+from app.modules.files.router import router as file_router
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -21,6 +22,7 @@ app = FastAPI(
 app.include_router(user_router)
 app.include_router(auth_router)
 app.include_router(folder_router)
+app.include_router(file_router)
 
 register_exception_handlers(app)
 

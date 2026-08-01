@@ -1,3 +1,5 @@
+from io import BytesIO
+
 from minio import Minio
 
 from app.core.config import settings
@@ -29,6 +31,39 @@ class MinioStorage:
             self.client.make_bucket(
                 self.bucket_name,
             )
+
+    def upload_file(
+        self,
+        object_name: str,
+        data: bytes,
+        content_type: str,
+    ) -> None:
+        """
+        Upload a file to MinIO.
+        """
+
+        stream = BytesIO(data)
+
+        self.client.put_object(
+            bucket_name=self.bucket_name,
+            object_name=object_name,
+            data=stream,
+            length=len(data),
+            content_type=content_type,
+        )
+
+    def delete_file(
+        self,
+        object_name: str,
+    ) -> None:
+        """
+        Delete a file from MinIO.
+        """
+
+        self.client.remove_object(
+            bucket_name=self.bucket_name,
+            object_name=object_name,
+        )
 
 
 minio_storage = MinioStorage()
