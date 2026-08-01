@@ -156,5 +156,34 @@ class FolderService:
 
         return updated_folder
 
+    async def delete_folder(
+        self,
+        folder_id: str,
+        current_user: UserDocument,
+    ) -> FolderDocument:
+        """
+        Soft delete a folder.
+        """
+
+        folder = await folder_repository.get_by_id(folder_id)
+
+        if folder is None:
+            raise NotFoundException("Folder not found.")
+
+        if folder.user_id != current_user.id:
+            raise NotFoundException("Folder not found.")
+
+        if folder.is_deleted:
+            raise NotFoundException("Folder not found.")
+
+        deleted_folder = await folder_repository.update(
+            folder.id,
+            {
+                "is_deleted": True,
+            },
+        )
+
+        return deleted_folder
+
 
 folder_service = FolderService()
