@@ -12,7 +12,10 @@ from app.core.responses import (
     APIResponse,
     success_response,
 )
-from app.modules.files.schemas import FileResponse
+from app.modules.files.schemas import (
+    FileResponse,
+    FileUpdateRequest,
+)
 from app.modules.files.service import file_service
 from app.modules.users.models import UserDocument
 from io import BytesIO
@@ -159,5 +162,34 @@ async def delete_file(
         message="File deleted successfully.",
         data=FileResponse.model_validate(
             deleted_file,
+        ),
+    )
+
+
+@router.patch(
+    "/{file_id}",
+    response_model=APIResponse[FileResponse],
+)
+async def rename_file(
+    file_id: str,
+    request: FileUpdateRequest,
+    current_user: UserDocument = Depends(
+        get_current_user,
+    ),
+):
+    """
+    Rename a file.
+    """
+
+    updated_file = await file_service.rename_file(
+        file_id=file_id,
+        request=request,
+        current_user=current_user,
+    )
+
+    return success_response(
+        message="File renamed successfully.",
+        data=FileResponse.model_validate(
+            updated_file,
         ),
     )

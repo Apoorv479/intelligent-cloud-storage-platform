@@ -3,12 +3,16 @@ from uuid import uuid4
 
 from fastapi import UploadFile
 
-from app.core.exceptions import NotFoundException
 from app.infrastructure.storage.minio_client import minio_storage
 from app.modules.files.models import FileDocument
 from app.modules.files.repository import file_repository
 from app.modules.folders.repository import folder_repository
 from app.modules.users.models import UserDocument
+from app.core.exceptions import (
+    ConflictException,
+    NotFoundException,
+)
+from app.modules.files.schemas import FileUpdateRequest
 
 
 class FileService:
@@ -209,6 +213,48 @@ class FileService:
             raise NotFoundException("File not found.")
 
         return deleted_file
+
+    async def rename_file(
+        self,
+        file_id: str,
+        request: FileUpdateRequest,
+        current_user: UserDocument,
+    ) -> FileDocument:
+        """
+        Rename a file.
+
+        Only the user-visible filename is changed.
+        The internal MinIO object name remains unchanged.
+        """
+
+        file_document = await self.get_file_by_id(
+            file_id=file_id,
+            current_user=current_user,
+        )
+
+        existing_file = await file_repository.get_one(
+            {
+                "user_id": current_user.id,
+                "folder_id": file_document.folder_id,
+                "original_name": request.name,
+                "is_deleted": False,
+            }
+        )
+
+        if existing_file is not None and existing_file.id != file_document.id:
+            raise ConflictException("A file with this name already exists.")
+
+        updated_file = await file_repository.update(
+            file_document.id,
+            {
+                "original_name": request.name,
+            },
+        )
+
+        if updated_file is None:
+            raise NotFoundException("File not found.")
+
+        return updated_file
 
 
 file_service = FileService()

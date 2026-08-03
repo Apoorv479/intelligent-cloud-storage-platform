@@ -1,4 +1,15 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class FileUpdateRequest(BaseModel):
+    """
+    Request schema for renaming a file.
+    """
+
+    name: str = Field(
+        min_length=1,
+        max_length=255,
+    )
 
 
 class FileResponse(BaseModel):
