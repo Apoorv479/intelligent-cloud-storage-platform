@@ -84,6 +84,29 @@ async def get_files(
 
 
 @router.get(
+    "/trash",
+    response_model=APIResponse[list[FileResponse]],
+)
+async def get_trash(
+    current_user: UserDocument = Depends(
+        get_current_user,
+    ),
+):
+    """
+    Retrieve files in trash.
+    """
+
+    files = await file_service.get_trash(
+        current_user=current_user,
+    )
+
+    return success_response(
+        message="Trash retrieved successfully.",
+        data=[FileResponse.model_validate(file) for file in files],
+    )
+
+
+@router.get(
     "/{file_id}",
     response_model=APIResponse[FileResponse],
 )
@@ -191,5 +214,32 @@ async def rename_file(
         message="File renamed successfully.",
         data=FileResponse.model_validate(
             updated_file,
+        ),
+    )
+
+
+@router.post(
+    "/{file_id}/restore",
+    response_model=APIResponse[FileResponse],
+)
+async def restore_file(
+    file_id: str,
+    current_user: UserDocument = Depends(
+        get_current_user,
+    ),
+):
+    """
+    Restore a file from trash.
+    """
+
+    restored_file = await file_service.restore_file(
+        file_id=file_id,
+        current_user=current_user,
+    )
+
+    return success_response(
+        message="File restored successfully.",
+        data=FileResponse.model_validate(
+            restored_file,
         ),
     )

@@ -256,5 +256,69 @@ class FileService:
 
         return updated_file
 
+    async def get_trash(
+        self,
+        current_user: UserDocument,
+    ) -> list[FileDocument]:
+        """
+        Retrieve soft-deleted files belonging to the current user.
+        """
+
+        return await file_repository.get_many(
+            filters={
+                "user_id": current_user.id,
+                "is_deleted": True,
+            },
+        )
+
+    async def restore_file(
+        self,
+        file_id: str,
+        current_user: UserDocument,
+    ) -> FileDocument:
+        """
+        Restore a soft-deleted file.
+        """
+
+        file_document = await file_repository.get_by_id(
+            file_id,
+        )
+
+        if file_document is None:
+            raise NotFoundException("File not found.")
+
+        if file_document.user_id != current_user.id:
+            raise NotFoundException("File not found.")
+
+        if not file_document.is_deleted:
+            raise ConflictException("File is not deleted.")
+
+        # Check whether an active file with the same
+        # name already exists in the same folder.
+
+        existing_file = await file_repository.get_one(
+            {
+                "user_id": current_user.id,
+                "folder_id": file_document.folder_id,
+                "original_name": file_document.original_name,
+                "is_deleted": False,
+            }
+        )
+
+        if existing_file is not None:
+            raise ConflictException("A file with this name already exists.")
+
+        restored_file = await file_repository.update(
+            file_document.id,
+            {
+                "is_deleted": False,
+            },
+        )
+
+        if restored_file is None:
+            raise NotFoundException("File not found.")
+
+        return restored_file
+
 
 file_service = FileService()
