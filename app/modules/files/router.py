@@ -243,3 +243,28 @@ async def restore_file(
             restored_file,
         ),
     )
+
+
+@router.delete(
+    "/{file_id}/permanent",
+    response_model=APIResponse[None],
+)
+async def permanently_delete_file(
+    file_id: str,
+    current_user: UserDocument = Depends(
+        get_current_user,
+    ),
+):
+    """
+    Permanently delete a file from trash.
+    """
+
+    await file_service.permanently_delete_file(
+        file_id=file_id,
+        current_user=current_user,
+    )
+
+    return success_response(
+        message="File permanently deleted.",
+        data=None,
+    )

@@ -138,3 +138,22 @@ class BaseRepository(Generic[T], ABC):
             return None
 
         return self.document_class.model_validate(document)
+
+    async def delete(
+        self,
+        document_id: str,
+    ) -> bool:
+        """
+        Permanently delete a document from MongoDB.
+        """
+
+        if not is_valid_object_id(document_id):
+            return False
+
+        result = await self.collection.delete_one(
+            {
+                "_id": document_id,
+            }
+        )
+
+        return result.deleted_count > 0

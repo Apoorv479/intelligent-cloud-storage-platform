@@ -320,5 +320,46 @@ class FileService:
 
         return restored_file
 
+    async def permanently_delete_file(
+        self,
+        file_id: str,
+        current_user: UserDocument,
+    ) -> None:
+        """
+        Permanently delete a file from MinIO and MongoDB.
+
+        The file must already be in trash.
+        """
+
+        file_document = await file_repository.get_by_id(
+            file_id,
+        )
+
+        if file_document is None:
+            raise NotFoundException("File not found.")
+
+        if file_document.user_id != current_user.id:
+            raise NotFoundException("File not found.")
+
+        if not file_document.is_deleted:
+            raise ConflictException(
+                "File must be moved to trash before permanent deletion."
+            )
+
+        # Delete actual object from MinIO.
+
+        minio_storage.delete_file(
+            file_document.storage_path,
+        )
+
+        # Delete metadata permanently from MongoDB.
+
+        deleted = await file_repository.delete(
+            file_document.id,
+        )
+
+        if not deleted:
+            raise NotFoundException("File not found.")
+
 
 file_service = FileService()
